@@ -43,7 +43,7 @@ if __name__ == '__main__':
 # Load Bookmark
 bookmark = Bookmark(Hydrophone.BUSH_POINT, bookmark_path)
 bookmark.load()
-start_time = bookmark.last_processed or (now - dt.timedelta(days=1))
+start_time = bookmark.last_processed or (now - dt.timedelta(hours=1))
 end_time = now
 
 # Generate parquet dataframes with noise levels for a time period
