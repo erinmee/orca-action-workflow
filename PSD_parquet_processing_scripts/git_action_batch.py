@@ -47,7 +47,7 @@ start_time = bookmark.last_processed or (now - dt.timedelta(hours=1))
 end_time = now
 
 # Generate parquet dataframes with noise levels for a time period
-pipeline.generate_parquet_file(start_time, 
+psd_path, broadband_path = pipeline.generate_parquet_file(start_time, 
                                 end_time, 
                                 upload_to_s3=False)
 # Update bookmark
