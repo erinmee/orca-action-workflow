@@ -32,7 +32,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_noise.txt
           pip uninstall orca-hls-utils -y
-          pip install orca-hls-utils@git+https://github.com/ayushmall0710/orca-hls-utils.git@development
+          pip install s3fs
+          pip install orca-hls-utils@git+https://github.com/ayushmall0710/orca-hls-utils.git@18e72ed8f81391629ad64462172c56711134c970
       
       - name: Install ffmpeg
         run: |
