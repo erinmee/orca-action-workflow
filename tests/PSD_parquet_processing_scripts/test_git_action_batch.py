@@ -9,7 +9,7 @@ import os
 # Import the module to test
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../PSD_parquet_processing_scripts'))
-from git_action_batch import Bookmark, process_audio_data
+from git_action_batch import Bookmark, process_audio_data, get_hydrophone_enum
 
 
 class TestBookmark(unittest.TestCase):
@@ -63,6 +63,34 @@ class TestBookmark(unittest.TestCase):
         bookmark = Bookmark('BUSH_POINT', '/nonexistent/path/bookmark.json')
         bookmark.load()
         self.assertIsNone(bookmark.last_processed)
+
+
+class TestGetHydrophoneEnum(unittest.TestCase):
+    """Test the get_hydrophone_enum function."""
+    
+    def test_valid_hydrophone_names(self):
+        """Test that valid hydrophone names map to correct enums."""
+        from orcasound_noise.utils import Hydrophone
+        
+        test_cases = [
+            ('BUSH_POINT', Hydrophone.BUSH_POINT),
+            ('ORCASOUND_LAB', Hydrophone.ORCASOUND_LAB),
+            ('PORT_TOWNSEND', Hydrophone.PORT_TOWNSEND),
+            ('SUNSET_BAY', Hydrophone.SUNSET_BAY)
+        ]
+        
+        for hydrophone_name, expected_enum in test_cases:
+            with self.subTest(hydrophone=hydrophone_name):
+                result = get_hydrophone_enum(hydrophone_name)
+                self.assertEqual(result, expected_enum)
+    
+    def test_invalid_hydrophone_name(self):
+        """Test that invalid hydrophone name raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            get_hydrophone_enum('INVALID_HYDROPHONE')
+        
+        self.assertIn('Unknown hydrophone', str(context.exception))
+        self.assertIn('INVALID_HYDROPHONE', str(context.exception))
 
 
 class TestProcessAudioDataMultiDay(unittest.TestCase):
@@ -321,6 +349,45 @@ class TestProcessAudioDataMultiDay(unittest.TestCase):
         for i, expected_folder in enumerate(expected_folders):
             actual_folder = mock_pipeline_class.call_args_list[i][1]['pqt_folder']
             self.assertEqual(actual_folder, expected_folder)
+    
+    @patch('git_action_batch.NoiseAnalysisPipeline')
+    def test_different_hydrophones(self, mock_pipeline_class):
+        """Test processing with different hydrophone types."""
+        from orcasound_noise.utils import Hydrophone
+        
+        # Test all hydrophone types
+        test_cases = [
+            ('BUSH_POINT', Hydrophone.BUSH_POINT),
+            ('ORCASOUND_LAB', Hydrophone.ORCASOUND_LAB),
+            ('PORT_TOWNSEND', Hydrophone.PORT_TOWNSEND),
+            ('SUNSET_BAY', Hydrophone.SUNSET_BAY)
+        ]
+        
+        for hydrophone_name, expected_enum in test_cases:
+            with self.subTest(hydrophone=hydrophone_name):
+                # Setup
+                mock_pipeline = Mock()
+                mock_pipeline.generate_parquet_file.return_value = ('psd_path', 'broadband_path')
+                mock_pipeline_class.return_value = mock_pipeline
+                mock_pipeline_class.reset_mock()
+                
+                bookmark = Bookmark(hydrophone_name, self.bookmark_path)
+                
+                pst = pytz.timezone('US/Pacific')
+                start_time = pst.localize(dt.datetime(2026, 1, 15, 10, 0, 0))
+                end_time = pst.localize(dt.datetime(2026, 1, 15, 14, 0, 0))
+                
+                # Execute
+                process_audio_data(start_time, end_time, hydrophone_name, bookmark)
+                
+                # Verify correct hydrophone enum was used
+                first_init_call = mock_pipeline_class.call_args_list[0]
+                self.assertEqual(first_init_call[0][0], expected_enum)
+                
+                # Verify correct folder path
+                folder_call = mock_pipeline_class.call_args[1]['pqt_folder']
+                expected_folder = f'data/hydrophone={hydrophone_name}/date=2026-01-15/'
+                self.assertEqual(folder_call, expected_folder)
 
 
 if __name__ == '__main__':

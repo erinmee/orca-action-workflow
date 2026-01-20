@@ -2,6 +2,7 @@
 import datetime as dt
 import pytz
 import json
+import argparse
 
 # importing orcasound_noise libraries
 from orcasound_noise.pipeline.pipeline import NoiseAnalysisPipeline
@@ -29,6 +30,32 @@ class Bookmark:
             self.last_processed = None
 
 
+def get_hydrophone_enum(hydrophone_name: str) -> Hydrophone:
+    """Map hydrophone name string to Hydrophone enum.
+    
+    Args:
+        hydrophone_name: String name of the hydrophone
+        
+    Returns:
+        Corresponding Hydrophone enum value
+        
+    Raises:
+        ValueError: If hydrophone name is not recognized
+    """
+    hydrophone_map = {
+        'BUSH_POINT': Hydrophone.BUSH_POINT,
+        'ORCASOUND_LAB': Hydrophone.ORCASOUND_LAB,
+        'PORT_TOWNSEND': Hydrophone.PORT_TOWNSEND,
+        'SUNSET_BAY': Hydrophone.SUNSET_BAY
+    }
+    
+    if hydrophone_name not in hydrophone_map:
+        raise ValueError(f"Unknown hydrophone: {hydrophone_name}. "
+                        f"Valid options are: {', '.join(hydrophone_map.keys())}")
+    
+    return hydrophone_map[hydrophone_name]
+
+
 def process_audio_data(start_time: dt.datetime, end_time: dt.datetime, 
                        hydrophone: str, bookmark: Bookmark):
     """
@@ -45,13 +72,14 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
         start_date = start_time.date()
         end_date = end_time.date()
         dates_array = [start_date + dt.timedelta(days=x) for x in range((end_date - start_date).days + 1)]
+        hydrophone_enum = get_hydrophone_enum(hydrophone)
         for i in range(len(dates_array)):
             intermediate_end = dt.datetime(dates_array[i].year, dates_array[i].month, dates_array[i].day, tzinfo=start_time.tzinfo) + dt.timedelta(days=1)
             partitioned_folder = f"data/hydrophone={hydrophone}/date={dates_array[i].strftime('%Y-%m-%d')}/"
             if i == len(dates_array) - 1:
                 intermediate_end = end_time
             # Set Location and Resolution
-            pipeline = NoiseAnalysisPipeline(Hydrophone.BUSH_POINT,
+            pipeline = NoiseAnalysisPipeline(hydrophone_enum,
                                              delta_f=10, bands=None,
                                              delta_t=60, mode='safe',
                                              pqt_folder=partitioned_folder)
@@ -65,7 +93,8 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
             start_time = intermediate_end
     else:
         partitioned_folder = f"data/hydrophone={hydrophone}/date={start_time.strftime('%Y-%m-%d')}/"
-        pipeline = NoiseAnalysisPipeline(Hydrophone.BUSH_POINT,
+        hydrophone_enum = get_hydrophone_enum(hydrophone)
+        pipeline = NoiseAnalysisPipeline(hydrophone_enum,
                                          delta_f=10, bands=None,
                                          delta_t=60, mode='safe',
                                          pqt_folder=partitioned_folder)
@@ -81,7 +110,16 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
 
 def main():
     """Main execution function."""
-    hydrophone = 'BUSH_POINT'
+    parser = argparse.ArgumentParser(description='Process hydrophone audio data and generate PSD parquet files.')
+    parser.add_argument('--hydrophone', 
+                       type=str, 
+                       default='BUSH_POINT',
+                       choices=['BUSH_POINT', 'ORCASOUND_LAB', 'PORT_TOWNSEND', 'SUNSET_BAY'],
+                       help='Hydrophone location to process')
+    
+    args = parser.parse_args()
+    hydrophone = args.hydrophone
+    
     now = dt.datetime.now(pytz.timezone('US/Pacific'))
     bookmark_path = f"data/{hydrophone}_bookmark.json"
 

@@ -1,13 +1,17 @@
 name: Scheduled PSD Processing Demo
 
 on:
-#  schedule:
-#    - cron: "15 * * * *"   # every hour (UTC)
+  schedule:
+    - cron: "15 * * * *"   # every hour (UTC)
   workflow_dispatch:
 
 jobs:
   process-s3-data:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        hydrophone: [BUSH_POINT, ORCASOUND_LAB, PORT_TOWNSEND, SUNSET_BAY]
 
     permissions:
       contents: write      # REQUIRED to commit back to repo
@@ -47,7 +51,7 @@ jobs:
       - name: Process S3 data
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          python PSD_parquet_processing_scripts/git_action_batch.py
+          python PSD_parquet_processing_scripts/git_action_batch.py --hydrophone ${{ matrix.hydrophone }}
 
       - name: Commit processed data to repository
         run: |
@@ -62,5 +66,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Automated data processing ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+          git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
           git push
