@@ -7,7 +7,7 @@ import argparse
 # importing orcasound_noise libraries
 from orcasound_noise.pipeline.pipeline import NoiseAnalysisPipeline
 from orcasound_noise.utils import Hydrophone
-from orcasound_noise.utils.file_connector import FileConnector
+from orcasound_noise.utils.file_connector import S3FileConnector
 
 
 # Bookmarking
@@ -31,7 +31,7 @@ class Bookmark:
 
 
 def process_audio_data(start_time: dt.datetime, end_time: dt.datetime, 
-                       hydrophone: Hydrophone, bookmark: Bookmark, file_connector: FileConnector):
+                       hydrophone: Hydrophone, bookmark: Bookmark, file_connector: S3FileConnector):
     """
     Process audio data for the given time range, partitioning by day if necessary.
     
@@ -107,7 +107,7 @@ def main():
     start_time = bookmark.last_processed or (now - dt.timedelta(hours=1))
     end_time = now
 
-    file_connector = FileConnector(hydrophone)
+    file_connector = S3FileConnector(hydrophone)
     process_audio_data(start_time, end_time, hydrophone, bookmark, file_connector)
 
 
