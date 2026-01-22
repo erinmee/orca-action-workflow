@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        hydrophone: [BUSH_POINT, ORCASOUND_LAB, PORT_TOWNSEND, SUNSET_BAY]
+        hydrophone: [Hydrophone.BUSH_POINT, Hydrophone.ORCASOUND_LAB, Hydrophone.PORT_TOWNSEND, Hydrophone.SUNSET_BAY]
 
     permissions:
       contents: write      # REQUIRED to commit back to repo
@@ -29,12 +29,12 @@ jobs:
         with:
           python-version: "3.9.18"
           cache: 'pip'
-          cache-dependency-path: requirements_noise.txt
+          cache-dependency-path: requirements_pipeline.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements_noise.txt
+          pip install -r requirements_pipeline.txt
           pip uninstall orca-hls-utils -y
           pip install s3fs
           pip install orca-hls-utils@git+https://github.com/ayushmall0710/orca-hls-utils.git@18e72ed8f81391629ad64462172c56711134c970
@@ -43,6 +43,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ffmpeg
+      
+      - name: Configure AWS
+        run: aws sts get-caller-identity
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
       
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
@@ -53,19 +60,19 @@ jobs:
         run: |
           python PSD_parquet_processing_scripts/git_action_batch.py --hydrophone ${{ matrix.hydrophone }}
 
-      - name: Commit processed data to repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # - name: Commit processed data to repository
+      #   run: |
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git pull
-          git add data/
+      #     git pull
+      #     git add data/
 
-          # Only commit if there are changes
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
+      #     # Only commit if there are changes
+      #     if git diff --cached --quiet; then
+      #       echo "No changes to commit"
+      #       exit 0
+      #     fi
 
-          git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
-          git push
+      #     git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+      #     git push

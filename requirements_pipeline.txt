@@ -1,0 +1,3 @@
+git+https://github.com/kkroening/ffmpeg-python
+orcasound_noise@git+https://github.com/orcasound/ambient-sound-analysis@update-s3-upload
+pytz
