@@ -48,7 +48,7 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
         dates_array = [start_date + dt.timedelta(days=x) for x in range((end_date - start_date).days + 1)]
         for i in range(len(dates_array)):
             intermediate_end = dt.datetime(dates_array[i].year, dates_array[i].month, dates_array[i].day, tzinfo=start_time.tzinfo) + dt.timedelta(days=1)
-            partitioned_folder = f"data/hydrophone={hydrophone.value.name}/date={dates_array[i].strftime('%Y-%m-%d')}/"
+            partitioned_folder = f"hydrophone={hydrophone.value.name}/date={dates_array[i].strftime('%Y-%m-%d')}/"
             if i == len(dates_array) - 1:
                 intermediate_end = end_time
             # Set Location and Resolution
@@ -62,14 +62,14 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
                                         intermediate_end, 
                                         upload_to_s3=False)
             
-            file_connector.upload_file(psd_path, start_time, intermediate_end, secs_per_sample=1, delta_hz=1, octave_bands=12, s3_folder_override=partitioned_folder)
-            file_connector.upload_file(broadband_path, start_time, intermediate_end, secs_per_sample=1, is_broadband=True, s3_folder_override=partitioned_folder)
+            file_connector.upload_file(psd_path, start_time, intermediate_end, secs_per_sample=1, delta_hz=1, octave_bands=12, s3_folder_override='ambient-sound-analysis/type=PSD/' + partitioned_folder)
+            file_connector.upload_file(broadband_path, start_time, intermediate_end, secs_per_sample=1, is_broadband=True, s3_folder_override='ambient-sound-analysis/type=BB/' + partitioned_folder)
 
             # Update bookmark
             bookmark.update(intermediate_end)
             start_time = intermediate_end
     else:
-        partitioned_folder = f"data/hydrophone={hydrophone.value.name}/date={start_time.strftime('%Y-%m-%d')}/"
+        partitioned_folder = f"hydrophone={hydrophone.value.name}/date={start_time.strftime('%Y-%m-%d')}/"
         pipeline = NoiseAnalysisPipeline(hydrophone,
                                          delta_f=1, bands=12,
                                          delta_t=1, mode='safe',
@@ -79,8 +79,8 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
         psd_path, broadband_path = pipeline.generate_parquet_file(start_time, 
                                         end_time, 
                                         upload_to_s3=False)
-        file_connector.upload_file(psd_path, start_time, end_time, secs_per_sample=1, delta_hz=1, octave_bands=12, s3_folder_override=partitioned_folder)
-        file_connector.upload_file(broadband_path, start_time, end_time, secs_per_sample=1, is_broadband=True, s3_folder_override=partitioned_folder)
+        file_connector.upload_file(psd_path, start_time, end_time, secs_per_sample=1, delta_hz=1, octave_bands=12, s3_folder_override='ambient-sound-analysis/type=PSD/' + partitioned_folder)
+        file_connector.upload_file(broadband_path, start_time, end_time, secs_per_sample=1, is_broadband=True, s3_folder_override='ambient-sound-analysis/type=BB/' + partitioned_folder)
     
     # Update bookmark with final end time
     bookmark.update(end_time)
@@ -90,13 +90,13 @@ def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(description='Process hydrophone audio data and generate PSD parquet files.')
     parser.add_argument('--hydrophone', 
-                       type=Hydrophone, 
-                       default=Hydrophone.BUSH_POINT,
-                       choices=list(Hydrophone),
+                       type=str, 
+                       default='bush_point',
+                       choices=[h.value.name for h in Hydrophone][1:],
                        help='Hydrophone location to process')
     
     args = parser.parse_args()
-    hydrophone = args.hydrophone
+    hydrophone = Hydrophone[args.hydrophone.upper()]
     
     now = dt.datetime.now(pytz.timezone('US/Pacific'))
     bookmark_path = f"data/{hydrophone.value.name}_bookmark.json"

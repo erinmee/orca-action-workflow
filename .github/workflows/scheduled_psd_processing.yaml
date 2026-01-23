@@ -11,7 +11,9 @@ jobs:
     
     strategy:
       matrix:
-        hydrophone: [Hydrophone.BUSH_POINT, Hydrophone.ORCASOUND_LAB, Hydrophone.PORT_TOWNSEND, Hydrophone.SUNSET_BAY]
+        hydrophone: ['bush_point', 'orcasound_lab', 'port_townsend', 'sunset_bay']
+      max-parallel: 1
+      fail-fast: false
 
     permissions:
       contents: write      # REQUIRED to commit back to repo
@@ -60,19 +62,19 @@ jobs:
         run: |
           python PSD_parquet_processing_scripts/git_action_batch.py --hydrophone ${{ matrix.hydrophone }}
 
-      # - name: Commit processed data to repository
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Commit processed data to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      #     git pull
-      #     git add data/
+          git pull
+          git add .
 
-      #     # Only commit if there are changes
-      #     if git diff --cached --quiet; then
-      #       echo "No changes to commit"
-      #       exit 0
-      #     fi
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
 
-      #     git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
-      #     git push
+          git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+          git push
