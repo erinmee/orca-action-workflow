@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        hydrophone: [BUSH_POINT, ORCASOUND_LAB, PORT_TOWNSEND, SUNSET_BAY]
+        hydrophone: ['bush_point', 'orcasound_lab', 'port_townsend', 'sunset_bay']
       max-parallel: 1
       fail-fast: false
 
