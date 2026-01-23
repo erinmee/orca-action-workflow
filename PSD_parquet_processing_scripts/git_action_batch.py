@@ -55,7 +55,7 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
             pipeline = NoiseAnalysisPipeline(hydrophone,
                                              delta_f=1, bands=12,
                                              delta_t=1, mode='safe',
-                                             pqt_folder=partitioned_folder)
+                                             )
             
             # Generate parquet dataframes with noise levels for a time period
             psd_path, broadband_path = pipeline.generate_parquet_file(start_time, 
@@ -73,7 +73,7 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
         pipeline = NoiseAnalysisPipeline(hydrophone,
                                          delta_f=1, bands=12,
                                          delta_t=1, mode='safe',
-                                         pqt_folder=partitioned_folder)
+                                         )
 
         # Generate parquet dataframes with noise levels for a time period
         psd_path, broadband_path = pipeline.generate_parquet_file(start_time, 
