@@ -48,7 +48,7 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
         dates_array = [start_date + dt.timedelta(days=x) for x in range((end_date - start_date).days + 1)]
         for i in range(len(dates_array)):
             intermediate_end = dt.datetime(dates_array[i].year, dates_array[i].month, dates_array[i].day, tzinfo=start_time.tzinfo) + dt.timedelta(days=1)
-            partitioned_folder = f"hydrophone={hydrophone.value.name}/date={dates_array[i].strftime('%Y-%m-%d')}/"
+            partitioned_folder = f"hydrophone={hydrophone.value.name}/date={dates_array[i].strftime('%Y-%m-%d')}"
             if i == len(dates_array) - 1:
                 intermediate_end = end_time
             # Set Location and Resolution
@@ -69,7 +69,7 @@ def process_audio_data(start_time: dt.datetime, end_time: dt.datetime,
             bookmark.update(intermediate_end)
             start_time = intermediate_end
     else:
-        partitioned_folder = f"hydrophone={hydrophone.value.name}/date={start_time.strftime('%Y-%m-%d')}/"
+        partitioned_folder = f"hydrophone={hydrophone.value.name}/date={start_time.strftime('%Y-%m-%d')}"
         pipeline = NoiseAnalysisPipeline(hydrophone,
                                          delta_f=1, bands=12,
                                          delta_t=1, mode='safe',
