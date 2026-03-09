@@ -1,4 +1,4 @@
 git+https://github.com/kkroening/ffmpeg-python
-orcasound_noise@git+https://github.com/orcasound/ambient-sound-analysis@psd-calc-adjustments
+orcasound_noise@git+https://github.com/orcasound/ambient-sound-analysis@partitioned-file-accessor
 pytz
 boto3
