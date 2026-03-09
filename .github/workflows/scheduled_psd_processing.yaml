@@ -1,4 +1,4 @@
-name: Scheduled PSD Processing
+name: Scheduled PSD Processing Demo
 
 on:
   schedule:
@@ -57,5 +57,21 @@ jobs:
       - name: Process S3 data
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          python ambient-sound-analysis_scripts/git_action_psd_upload.py --hydrophone ${{ matrix.hydrophone }}
+          python PSD_parquet_processing_scripts/git_action_psd_upload.py --hydrophone ${{ matrix.hydrophone }}
 
+      # - name: Commit processed data to repository
+      #   run: |
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      #     git pull
+      #     git add .
+
+      #     # Only commit if there are changes
+      #     if git diff --cached --quiet; then
+      #       echo "No changes to commit"
+      #       exit 0
+      #     fi
+
+      #     git commit -m "Automated data processing for ${{ matrix.hydrophone }} ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+      #     git push
